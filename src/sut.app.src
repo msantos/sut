@@ -1,0 +1,5 @@
+{application, sut,
+    [
+    {description, "6in4 Userlspace tunnel"},
+    {vsn, "0.01"}
+    ]}.
