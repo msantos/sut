@@ -36,7 +36,7 @@
         destroy/1
     ]).
 
--export([start_link/1]).
+-export([start/1, start_link/1]).
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
         terminate/2, code_change/3]).
 
@@ -47,10 +47,11 @@
 destroy(Ref) when is_pid(Ref) ->
     gen_server:call(Ref, destroy).
 
+start(Opt) when is_list(Opt) ->
+    gen_server:start(?MODULE, [options(Opt)], []).
+
 start_link(Opt) when is_list(Opt) ->
-    Fun = ?PROPLIST_TO_RECORD(sut_state),
-    State = Fun(Opt),
-    gen_server:start_link(?MODULE, [State], []).
+    gen_server:start_link(?MODULE, [options(Opt)], []).
 
 
 %%--------------------------------------------------------------------
@@ -158,3 +159,7 @@ aton(Address) when is_list(Address) ->
     N;
 aton(Address) when is_tuple(Address) ->
     Address.
+
+options(Opt) ->
+    Fun = ?PROPLIST_TO_RECORD(sut_state),
+    Fun(Opt).
