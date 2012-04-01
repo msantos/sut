@@ -140,7 +140,7 @@ handle_info({udp, Socket, {SA1,SA2,SA3,SA4}, 0,
             end,
             <<_:Opt/bits, Payload/bits>> = Data,
 
-            ok = case valid(Payload, State) of
+            ok = case valid(Payload) of
                 true ->
                     tuncer:send(Dev, Payload);
                 false ->
@@ -193,37 +193,37 @@ valid(<<6:4, _Class:8, _Flow:20,
         _Len:16, _Next:8, _Hop:8,
         _SA1:16, _SA2:16, _SA3:16, _SA4:16, _SA5:16, _SA6:16, _SA7:16, _SA8:16,
         0:16, 0:16, 0:16, 0:16, 0:16, 0:16, 0:16, 1:16,
-        _Payload/binary>>, _State) ->
+        _Payload/binary>>) ->
     false;
 % unspecified address
 valid(<<6:4, _Class:8, _Flow:20,
         _Len:16, _Next:8, _Hop:8,
         _SA1:16, _SA2:16, _SA3:16, _SA4:16, _SA5:16, _SA6:16, _SA7:16, _SA8:16,
         0:16, 0:16, 0:16, 0:16, 0:16, 0:16, 0:16, 0:16,
-        _Payload/binary>>, _State) ->
+        _Payload/binary>>) ->
     false;
 % Multicast 
 valid(<<6:4, _Class:8, _Flow:20,
         _Len:16, _Next:8, _Hop:8,
         _SA1:16, _SA2:16, _SA3:16, _SA4:16, _SA5:16, _SA6:16, _SA7:16, _SA8:16,
         16#FF00:16, _:16, _:16, _:16, _:16, _:16, _:16, _:16,
-        _Payload/binary>>, _State) ->
+        _Payload/binary>>) ->
     false;
 % IPv6 Addresses with Embedded IPv4 Addresses
 valid(<<6:4, _Class:8, _Flow:20,
         _Len:16, _Next:8, _Hop:8,
         _SA1:16, _SA2:16, _SA3:16, _SA4:16, _SA5:16, _SA6:16, _SA7:16, _SA8:16,
         0:16, 0:16, 0:16, 0:16, 0:16, 0:16, _:16, _:16,
-        _Payload/binary>>, _State) ->
+        _Payload/binary>>) ->
     false;
 valid(<<6:4, _Class:8, _Flow:20,
         _Len:16, _Next:8, _Hop:8,
         _SA1:16, _SA2:16, _SA3:16, _SA4:16, _SA5:16, _SA6:16, _SA7:16, _SA8:16,
         0:16, 0:16, 0:16, 0:16, 0:16, 16#FFFF:16, _:16, _:16,
-        _Payload/binary>>, _State) ->
+        _Payload/binary>>) ->
     false;
-valid(<<6:4, _/binary>>, _State) ->
+valid(<<6:4, _/binary>>) ->
     true;
 % Invalid protocol
-valid(_Packet, _State) ->
+valid(_Packet) ->
     false.
