@@ -187,9 +187,7 @@ aton(Address) when is_list(Address) ->
 aton(Address) when is_tuple(Address) ->
     Address.
 
-% Invalid protocol
-valid(<<Protocol:4, _/binary>>, _State) when Protocol =/= 6 ->
-    false;
+
 % loopback
 valid(<<6:4, _Class:8, _Flow:20,
         _Len:16, _Next:8, _Hop:8,
@@ -224,5 +222,8 @@ valid(<<6:4, _Class:8, _Flow:20,
         0:16, 0:16, 0:16, 0:16, 0:16, 16#FFFF:16, _:16, _:16,
         _Payload/binary>>, _State) ->
     false;
-valid(_, _) ->
-    true.
+valid(<<6:4, _/binary>>, _State) ->
+    true;
+% Invalid protocol
+valid(_Packet, _State) ->
+    false.
