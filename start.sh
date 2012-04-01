@@ -1,3 +1,3 @@
 #!/bin/sh
 
-erl $@ -pa deps/*/ebin ebin
+erl $@ -boot start_sasl -pa deps/*/ebin ebin
