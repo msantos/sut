@@ -204,11 +204,17 @@ valid(<<6:4, _Class:8, _Flow:20,
         16#FF00:16, _:16, _:16, _:16, _:16, _:16, _:16, _:16,
         _Payload/binary>>, _State) ->
     false;
-% IPv4-mapped IPv6 address
+% IPv6 Addresses with Embedded IPv4 Addresses
 valid(<<6:4, _Class:8, _Flow:20,
         _Len:16, _Next:8, _Hop:8,
         _SA1:16, _SA2:16, _SA3:16, _SA4:16, _SA5:16, _SA6:16, _SA7:16, _SA8:16,
-        _:16, _:16, _:16, _:16, _:16, 16#FFFF:16, 0:16, 0:16,
+        0:16, 0:16, 0:16, 0:16, 0:16, 0:16, _:16, _:16,
+        _Payload/binary>>, _State) ->
+    false;
+valid(<<6:4, _Class:8, _Flow:20,
+        _Len:16, _Next:8, _Hop:8,
+        _SA1:16, _SA2:16, _SA3:16, _SA4:16, _SA5:16, _SA6:16, _SA7:16, _SA8:16,
+        0:16, 0:16, 0:16, 0:16, 0:16, 16#FFFF:16, _:16, _:16,
         _Payload/binary>>, _State) ->
     false;
 valid(_, _) ->
