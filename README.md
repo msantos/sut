@@ -46,8 +46,8 @@ sut, an IPv6 in IPv4 Userlspace Tunnel (RFC 4213)
                     | {serverv4, IPv4Address}
                     | {clientv4, IPv4Address}
                     | {clientv6, IPv6Address}
-                    | {out, Fun}
-                    | {in, Fun}
+                    | {filter_out, Fun}
+                    | {filter_in, Fun}
                 Ifname = string() | binary()
                 IPv4Address = string() | tuple()
                 IPv6Address = string() | tuple()
@@ -69,12 +69,13 @@ sut, an IPv6 in IPv4 Userlspace Tunnel (RFC 4213)
         {clientv6, Client6} is the IPv6 address of the local end. This
         address will usually be assigned by the tunnel broker.
 
-        {in, Fun} allows filtering of IPv6 packets received from the
-        network. All packets undergo the mandatory checks specified by
-        RFC 4213 before being passed to user checks.
+        {filter_in, Fun} allows filtering and arbititrary transformation
+        of IPv6 packets received from the network. All packets undergo
+        the mandatory checks specified by RFC 4213 before being passed
+        to user checks.
 
-        {out, Fun} allows filtering of IPv6 packets received from the
-        tun device.
+        {filter_out, Fun} allows filtering and manipulation of IPv6
+        packets received from the tun device.
 
         Filtering functions take 2 argments: the packet payload (a binary)
         and the tunnel state:
@@ -87,9 +88,11 @@ sut, an IPv6 in IPv4 Userlspace Tunnel (RFC 4213)
                 clientv6
                 }.
 
-        Filtering functions return ok to allow the packet. Any other
-        return value causes the packet to be dropped. The default filter
-        for both incoming and outgoing packets is a noop:
+        Filtering functions should return ok to allow the packet or {ok,
+        binary()} if the packet has been altered by the function.
+
+        Any other return value causes the packet to be dropped. The
+        default filter for both incoming and outgoing packets is a noop:
 
             fun(_Packet, _State) -> ok end.
 
@@ -104,8 +107,6 @@ sut, an IPv6 in IPv4 Userlspace Tunnel (RFC 4213)
 ## TODO
 
 * Support other checks required by RFC
-
-* Support inbound/outbound IPv6 firewalling
 
 * Decide how to handle write failures to the network and tun device
 

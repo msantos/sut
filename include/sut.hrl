@@ -44,8 +44,8 @@
         serverv4,
         clientv4,
         clientv6,
-        out = fun(_Packet, _State) -> ok end,
-        in = fun(_Packet, _State) -> ok end,
+        filter_out = fun(_Packet, _State) -> ok end,
+        filter_in = fun(_Packet, _State) -> ok end,
 
         s,
         fd,

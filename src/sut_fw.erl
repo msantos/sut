@@ -41,21 +41,29 @@
 
 %% tun device -> socket
 out(Packet, #sut_state{
-                out = Fun,
+                filter_out = Fun,
                 s = Socket,
                 serverv4 = Server
                 } = State) ->
-    ok = Fun(Packet, State),
-    ok = gen_udp:send(Socket, Server, 0, Packet).
+    {ok, Packet1} = case Fun(Packet, State) of
+        ok -> {ok, Packet};
+        {ok, N} -> {ok, N};
+        Err -> Err
+    end,
+    ok = gen_udp:send(Socket, Server, 0, Packet1).
 
 %% socket -> tun device
 in(Packet, #sut_state{
-                in = Fun,
+                filter_in = Fun,
                 dev = Dev
                 } = State) ->
     ok = valid(Packet),
-    ok = Fun(Packet, State),
-    ok = tuncer:send(Dev, Packet).
+    {ok, Packet1} = case Fun(Packet, State) of
+        ok -> {ok, Packet};
+        {ok, N} -> {ok, N};
+        Err -> Err
+    end,
+    ok = tuncer:send(Dev, Packet1).
 
 
 %%

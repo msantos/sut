@@ -42,8 +42,8 @@
 %%% Then start using:
 %%%
 %%% sut:start([
-%%%     {out, fun(Packet, State) -> basic_firewall:out(Packet, State) end},
-%%%     {in, fun(Packet, State) -> basic_firewall:in(Packet, State) end},
+%%%     {filter_out, fun(Packet, State) -> basic_firewall:out(Packet, State) end},
+%%%     {filter_in, fun(Packet, State) -> basic_firewall:in(Packet, State) end},
 %%%
 %%%     {serverv4, Server4},
 %%%     {clientv4, Client4},
