@@ -37,11 +37,10 @@
     ]).
 
 
-%% XXX send failures are ignored
-
 %% tun device -> socket
 out(Packet, #sut_state{
                 filter_out = Fun,
+                error_out = Err,
                 s = Socket,
                 serverv4 = Server
                 } = State) ->
@@ -50,11 +49,12 @@ out(Packet, #sut_state{
         {ok, N} -> {ok, N};
         Err -> Err
     end,
-    ok = gen_udp:send(Socket, Server, 0, Packet1).
+    ok = Err(gen_udp:send(Socket, Server, 0, Packet1)).
 
 %% socket -> tun device
 in(Packet, #sut_state{
                 filter_in = Fun,
+                error_in = Err,
                 dev = Dev
                 } = State) ->
     ok = valid(Packet),
@@ -63,7 +63,7 @@ in(Packet, #sut_state{
         {ok, N} -> {ok, N};
         Err -> Err
     end,
-    ok = tuncer:send(Dev, Packet1).
+    ok = Err(tuncer:send(Dev, Packet1)).
 
 
 %%

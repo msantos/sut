@@ -108,9 +108,4 @@ sut, an IPv6 in IPv4 Userlspace Tunnel (RFC 4213)
 
 * Support other checks required by RFC
 
-* Decide how to handle write failures to the network and tun device
-
-    * possible packets may fail before interface is fully configured
-      (routes set up, etc)
-
 * Make a firewall ruleset to Erlang compiler

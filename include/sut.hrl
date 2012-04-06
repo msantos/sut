@@ -44,8 +44,12 @@
         serverv4,
         clientv4,
         clientv6,
+
         filter_out = fun(_Packet, _State) -> ok end,
         filter_in = fun(_Packet, _State) -> ok end,
+
+        error_out = fun(ok) -> ok; (Error) -> Error end,
+        error_in = fun(ok) -> ok; (Error) -> Error end,
 
         s,
         fd,
