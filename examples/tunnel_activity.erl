@@ -61,11 +61,11 @@ start(Dev, Opt) ->
     ok = serctl:tcsetattr(FD, tcsanow, Termios),
 
     sut:start([
-            {out, fun(_Packet, _State) ->
+            {filter_out, fun(_Packet, _State) ->
                         spawn(fun() -> serial_write(FD, Out) end),
                         ok
                 end},
-            {in, fun(_Packet, _State) ->
+            {filter_in, fun(_Packet, _State) ->
                         spawn(fun() -> serial_write(FD, In) end),
                         ok
                 end}
