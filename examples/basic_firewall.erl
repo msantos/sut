@@ -37,7 +37,7 @@
 %%%     udp: none
 %%%     tcp:
 %%%         outgoing: 22, 80, 443
-%%%         incomiing: 22
+%%%         incoming: 22
 %%%
 %%% Then start using:
 %%%

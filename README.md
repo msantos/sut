@@ -24,7 +24,11 @@ sut, an IPv6 in IPv4 Userlspace Tunnel (RFC 4213)
 
     * Clientv6 = The IPv6 address assigned by HE to your end of the tunnel
 
-            sut:start([{serverv4, "216.66.22.2"}, {clientv4, "192.168.1.72"}, {clientv6, "2001:3:3:3::2"}]).
+            sut:start([
+                    {serverv4, "216.66.22.2"},
+                    {clientv4, "192.168.1.72"},
+                    {clientv6, "2001:3:3:3::2"}
+                    ]).
 
     * Set up MTU and routing (as root)
 
@@ -54,11 +58,11 @@ sut, an IPv6 in IPv4 Userlspace Tunnel (RFC 4213)
                 Fun = fun()
                 Ref = pid()
 
-        Starts a IPv6 over IPv4 configured tunnel.
+        Starts an IPv6 over IPv4 configured tunnel.
 
         The default tun device is named "sut-ipv6". To specify the name,
         use {ifname, <<"devname">>}. Note the user running the tunnel
-        must have sudo permissions to confifgure this device.
+        must have sudo permissions to configure this device.
 
         {serverv4, Server4} is the IPv4 address of the peer.
 
@@ -69,7 +73,7 @@ sut, an IPv6 in IPv4 Userlspace Tunnel (RFC 4213)
         {clientv6, Client6} is the IPv6 address of the local end. This
         address will usually be assigned by the tunnel broker.
 
-        {filter_in, Fun} allows filtering and arbititrary transformation
+        {filter_in, Fun} allows filtering and arbitrary transformation
         of IPv6 packets received from the network. All packets undergo
         the mandatory checks specified by RFC 4213 before being passed
         to user checks.
@@ -103,6 +107,54 @@ sut, an IPv6 in IPv4 Userlspace Tunnel (RFC 4213)
 
         Shutdown the tunnel. On Linux, the tunnel device will be removed.
 
+## EXAMPLES
+
+To compile:
+
+    make examples
+
+### basic\_firewall
+
+An example of setting up a stateless packet filter.
+
+The rules are:
+
+    * icmp: all
+    * udp: none
+    * tcp:
+        * outgoing: 22, 80, 443
+        * incoming: 22
+
+Start the tunnel with the filter:
+
+    sut:start([
+        {filter_out, fun(Packet, State) -> basic_firewall:out(Packet, State) end},
+        {filter_in, fun(Packet, State) -> basic_firewall:in(Packet, State) end},
+
+        {serverv4, Server4},
+        {clientv4, Client4},
+        {clientv6, Client6}
+        ]).
+
+### tunnel\_activity
+
+Flashes LEDs attached to an Arduino to signal tunnel activity. Requires:
+
+    https://github.com/msantos/srly
+
+Upload a sketch to the Arduino:
+
+    https://github.com/msantos/srly/blob/master/examples/strobe/strobe.pde
+
+Then start the tunnel:
+
+    tunnel_activity:start("/dev/ttyUSB0",
+            [{led_in, 3},
+             {led_out, 4},
+
+            {serverv4, Server4},
+            {clientv4, Client4},
+            {clientv6, Client6}]).
 
 ## TODO
 
