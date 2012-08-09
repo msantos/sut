@@ -38,32 +38,34 @@
 
 
 %% tun device -> socket
-out(Packet, #sut_state{
-                filter_out = Fun,
-                error_out = FunErr,
-                s = Socket,
-                serverv4 = Server
-                } = State) ->
-    {ok, Packet1} = case Fun(Packet, State) of
-        ok -> {ok, Packet};
-        {ok, N} -> {ok, N};
+out(Packet, #sut_state{filter_out = Fun} = State) ->
+    case Fun(Packet, State) of
+        ok -> to_sock(Packet, State);
+        {ok, NPacket} -> to_sock(NPacket, State);
         Error -> Error
-    end,
-    ok = FunErr(gen_udp:send(Socket, Server, 0, Packet1)).
+    end.
+
+to_sock(Packet, #sut_state{
+                s = Socket,
+                error_out = FunErr,
+                serverv4 = Server
+                }) ->
+    ok = FunErr(gen_udp:send(Socket, Server, 0, Packet)).
 
 %% socket -> tun device
-in(Packet, #sut_state{
-                filter_in = Fun,
-                error_in = FunErr,
-                dev = Dev
-                } = State) ->
+in(Packet, #sut_state{filter_in = Fun} = State) ->
     ok = valid(Packet),
-    {ok, Packet1} = case Fun(Packet, State) of
-        ok -> {ok, Packet};
-        {ok, N} -> {ok, N};
+    case Fun(Packet, State) of
+        ok -> to_tun(Packet, State);
+        {ok, NPacket} -> to_tun(NPacket, State);
         Error -> Error
-    end,
-    ok = FunErr(tuncer:send(Dev, Packet1)).
+    end.
+
+to_tun(Packet, #sut_state{
+                dev = Dev,
+                error_in = FunErr
+                }) ->
+    ok = FunErr(tuncer:send(Dev, Packet)).
 
 
 %%
