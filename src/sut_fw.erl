@@ -32,39 +32,35 @@
 -include("sut.hrl").
 
 -export([
-    out/2,
-    in/2
+    out/3,
+    in/3
     ]).
 
 
 %% tun device -> socket
-out(Packet, #sut_state{filter_out = Fun} = State) ->
+out(Socket, Packet, #sut_state{filter_out = Fun} = State) ->
     case Fun(Packet, State) of
-        ok -> to_sock(Packet, State);
-        {ok, NPacket} -> to_sock(NPacket, State);
+        ok -> to_sock(Socket, Packet, State);
+        {ok, NPacket} -> to_sock(Socket, NPacket, State);
         Error -> Error
     end.
 
-to_sock(Packet, #sut_state{
-                s = Socket,
+to_sock(Socket, Packet, #sut_state{
                 error_out = FunErr,
                 serverv4 = Server
                 }) ->
     ok = FunErr(gen_udp:send(Socket, Server, 0, Packet)).
 
 %% socket -> tun device
-in(Packet, #sut_state{filter_in = Fun} = State) ->
+in(Dev, Packet, #sut_state{filter_in = Fun} = State) ->
     ok = valid(Packet),
     case Fun(Packet, State) of
-        ok -> to_tun(Packet, State);
-        {ok, NPacket} -> to_tun(NPacket, State);
+        ok -> to_tun(Dev, Packet, State);
+        {ok, NPacket} -> to_tun(Dev, NPacket, State);
         Error -> Error
     end.
 
-to_tun(Packet, #sut_state{
-                dev = Dev,
-                error_in = FunErr
-                }) ->
+to_tun(Dev, Packet, #sut_state{error_in = FunErr}) ->
     ok = FunErr(tuncer:send(Dev, Packet)).
 
 

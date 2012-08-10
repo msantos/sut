@@ -40,6 +40,22 @@
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
         terminate/2, code_change/3]).
 
+-record(state, {
+    ifname = <<"sut-ipv6">>,
+    serverv4,
+    clientv4,
+    clientv6,
+
+    filter_out = fun(_Packet, _State) -> ok end,
+    filter_in = fun(_Packet, _State) -> ok end,
+
+    error_out = fun(ok) -> ok; (Error) -> Error end,
+    error_in = fun(ok) -> ok; (Error) -> Error end,
+
+    s,
+    fd,
+    dev
+    }).
 
 %%--------------------------------------------------------------------
 %%% Exports
@@ -57,7 +73,7 @@ start_link(Opt) when is_list(Opt) ->
 %%--------------------------------------------------------------------
 %%% Callbacks
 %%--------------------------------------------------------------------
-init([#sut_state{serverv4 = Server,
+init([#state{serverv4 = Server,
             clientv4 = Client4,
             clientv6 = Client6,
             ifname = Ifname} = State]) ->
@@ -82,7 +98,7 @@ init([#sut_state{serverv4 = Server,
 
     ok = tuncer:up(Dev, Client6),
 
-    {ok, State#sut_state{
+    {ok, State#state{
             fd = FD,
             s = Socket,
             dev = Dev,
@@ -107,10 +123,11 @@ handle_info({udp, Socket, {SA1,SA2,SA3,SA4}, 0,
            _Off:13, _TTL:8, ?IPPROTO_IPV6:8, _Sum:16,
            SA1:8, SA2:8, SA3:8, SA4:8,
            DA1:8, DA2:8, DA3:8, DA4:8,
-           Data/binary>>}, #sut_state{
+           Data/binary>>}, #state{
                 s = Socket,
                 clientv4 = {DA1,DA2,DA3,DA4},
-                serverv4 = {SA1,SA2,SA3,SA4}
+                serverv4 = {SA1,SA2,SA3,SA4},
+                dev = Dev
                 } = State) ->
 
             Opt = case (HL-5)*4 of
@@ -119,7 +136,7 @@ handle_info({udp, Socket, {SA1,SA2,SA3,SA4}, 0,
             end,
             <<_:Opt/bits, Payload/bits>> = Data,
 
-            spawn(sut_fw, in, [Payload, State]),
+            spawn(sut_fw, in, [Dev, Payload, copy(State)]),
             {noreply, State};
 
 % Invalid packet
@@ -132,10 +149,11 @@ handle_info({udp, _Socket, Src, 0, Pkt}, State) ->
             {noreply, State};
 
 % Data from the tun device
-handle_info({tuntap, Dev, Data}, #sut_state{
-                dev = Dev
+handle_info({tuntap, Dev, Data}, #state{
+                dev = Dev,
+                s = Socket
                 } = State) ->
-    spawn(sut_fw, out, [Data, State]),
+    spawn(sut_fw, out, [Socket, Data, copy(State)]),
     {noreply, State};
 
 % WTF?
@@ -143,7 +161,7 @@ handle_info(Info, State) ->
     error_logger:error_report([wtf, Info]),
     {noreply, State}.
 
-terminate(_Reason, #sut_state{fd = FD}) ->
+terminate(_Reason, #state{fd = FD}) ->
     procket:close(FD),
     ok.
 
@@ -161,5 +179,28 @@ aton(Address) when is_tuple(Address) ->
     Address.
 
 options(Opt) ->
-    Fun = ?PROPLIST_TO_RECORD(sut_state),
+    Fun = ?PROPLIST_TO_RECORD(state),
     Fun(Opt).
+
+copy(#state{
+        serverv4 = Serverv4,
+        clientv4 = Clientv4,
+        clientv6 = Clientv6,
+
+        filter_out = Fout,
+        filter_in = Fin,
+
+        error_out = Eout,
+        error_in = Ein
+    }) ->
+    #sut_state{
+        serverv4 = Serverv4,
+        clientv4 = Clientv4,
+        clientv6 = Clientv6,
+
+        filter_out = Fout,
+        filter_in = Fin,
+
+        error_out = Eout,
+        error_in = Ein
+        }.
