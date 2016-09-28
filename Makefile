@@ -1,25 +1,17 @@
+.PHONY: all dirs compile clean examples eg
 
-REBAR=$(shell which rebar || echo ./rebar)
+REBAR := rebar3
 
-all: dirs deps compile
-
-./rebar:
-	erl -noshell -s inets start -s ssl start \
-		-eval 'httpc:request(get, {"https://github.com/downloads/basho/rebar/rebar", []}, [], [{stream, "./rebar"}])' \
-		-s inets stop -s init stop
-	chmod +x ./rebar
+all: dirs deps clean compile
 
 dirs:
 	@mkdir -p priv/tmp
 
-compile: $(REBAR)
+compile:
 	@$(REBAR) compile
 
-clean: $(REBAR)
+clean:
 	@$(REBAR) clean
-
-deps: $(REBAR)
-	@$(REBAR) check-deps || $(REBAR) get-deps
 
 examples: eg
 eg:

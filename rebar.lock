@@ -1,0 +1,12 @@
+[{<<"pkt">>,
+  {git,"git://github.com/msantos/pkt.git",
+       {ref,"6ae07de46a24e5b0fe76948981979580da8348ef"}},
+  0},
+ {<<"procket">>,
+  {git,"git://github.com/msantos/procket.git",
+       {ref,"ffbb9b631829e2ddf3c7fb5113e9a4e726f032d7"}},
+  0},
+ {<<"tunctl">>,
+  {git,"git://github.com/msantos/tunctl.git",
+       {ref,"3d84df508d04a80b38d38221fa2ee76c804c0624"}},
+  0}].
