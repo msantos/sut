@@ -1,4 +1,4 @@
-%% Copyright (c) 2012, Michael Santos <michael.santos@gmail.com>
+%% Copyright (c) 2012-2016, Michael Santos <michael.santos@gmail.com>
 %% All rights reserved.
 %%
 %% Redistribution and use in source and binary forms, with or without
@@ -38,6 +38,7 @@
 
 
 %% tun device -> socket
+-spec out(inet:socket(), binary(), #sut_state{}) -> any().
 out(Socket, Packet, #sut_state{filter_out = Fun} = State) ->
     case Fun(Packet, State) of
         ok -> to_sock(Socket, Packet, State);
@@ -52,6 +53,7 @@ to_sock(Socket, Packet, #sut_state{
     ok = FunErr(gen_udp:send(Socket, Server, 0, Packet)).
 
 %% socket -> tun device
+-spec in(pid(), binary(), #sut_state{}) -> any().
 in(Dev, Packet, #sut_state{filter_in = Fun} = State) ->
     ok = valid(Packet),
     case Fun(Packet, State) of

@@ -1,4 +1,4 @@
-%% Copyright (c) 2012, Michael Santos <michael.santos@gmail.com>
+%% Copyright (c) 2012-2016, Michael Santos <michael.santos@gmail.com>
 %% All rights reserved.
 %%
 %% Redistribution and use in source and binary forms, with or without
@@ -41,31 +41,34 @@
         terminate/2, code_change/3]).
 
 -record(state, {
-    ifname = <<"sut-ipv6">>,
-    serverv4,
-    clientv4,
-    clientv6,
+    ifname = <<"sut-ipv6">> :: binary(),
+    serverv4 = {127,0,0,1} :: string() | inet:ip4_address(),
+    clientv4 = {127,0,0,1} :: string() | inet:ip4_address(),
+    clientv6 = {0,0,0,0,0,0,0,1} :: string() | inet:ip6_address(),
 
-    filter_out = fun(_Packet, _State) -> ok end,
-    filter_in = fun(_Packet, _State) -> ok end,
+    filter_out = fun(_Packet, _State) -> ok end :: fun((binary(), #sut_state{}) -> ok | {ok, Packet :: binary()} | {error, any()}),
+    filter_in = fun(_Packet, _State) -> ok end :: fun((binary(), #sut_state{}) -> ok | {ok, Packet :: binary()} | {error, any()}),
 
-    error_out = fun(ok) -> ok; (Error) -> Error end,
-    error_in = fun(ok) -> ok; (Error) -> Error end,
+    error_out = fun(ok) -> ok; (Error) -> Error end :: fun((any()) -> any()),
+    error_in = fun(ok) -> ok; (Error) -> Error end :: fun((any()) -> any()),
 
-    s,
-    fd,
-    dev
+    s :: undefined | inet:socket(),
+    fd :: undefined | integer(),
+    dev :: undefined | pid()
     }).
 
 %%--------------------------------------------------------------------
 %%% Exports
 %%--------------------------------------------------------------------
+-spec destroy(pid()) -> ok.
 destroy(Ref) when is_pid(Ref) ->
     gen_server:call(Ref, destroy).
 
+-spec start(proplists:proplist()) -> 'ignore' | {'error',_} | {'ok',pid()}.
 start(Opt) when is_list(Opt) ->
     gen_server:start(?MODULE, [options(Opt)], []).
 
+-spec start_link(proplists:proplist()) -> 'ignore' | {'error',_} | {'ok',pid()}.
 start_link(Opt) when is_list(Opt) ->
     gen_server:start_link(?MODULE, [options(Opt)], []).
 
@@ -106,8 +109,6 @@ init([#state{serverv4 = Server,
             clientv4 = aton(Client4),
             clientv6 = aton(Client6)
             }}.
-
-
 
 handle_call(destroy, _From, State) ->
     {stop, normal, ok, State}.
@@ -168,10 +169,10 @@ terminate(_Reason, #state{fd = FD}) ->
 code_change(_OldVsn, State, _Extra) ->
     {ok, State}.
 
-
 %%--------------------------------------------------------------------
 %%% Internal functions
 %%--------------------------------------------------------------------
+-spec aton(string() | inet:ip_address()) -> inet:ip_address().
 aton(Address) when is_list(Address) ->
     {ok, N} = inet_parse:address(Address),
     N;

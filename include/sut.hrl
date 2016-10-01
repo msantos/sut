@@ -1,4 +1,4 @@
-%% Copyright (c) 2012, Michael Santos <michael.santos@gmail.com>
+%% Copyright (c) 2012-2016, Michael Santos <michael.santos@gmail.com>
 %% All rights reserved.
 %%
 %% Redistribution and use in source and binary forms, with or without
@@ -40,18 +40,18 @@
         end).
 
 -record(sut_state, {
-        ifname = <<"sut-ipv6">>,
-        serverv4,
-        clientv4,
-        clientv6,
+        ifname = <<"sut-ipv6">> :: binary(),
+        serverv4 = {127,0,0,1} :: string() | inet:ip4_address(),
+        clientv4 = {127,0,0,1} :: string() | inet:ip4_address(),
+        clientv6 = {0,0,0,0,0,0,0,1} :: string() | inet:ip6_address(),
 
-        filter_out = fun(_Packet, _State) -> ok end,
-        filter_in = fun(_Packet, _State) -> ok end,
+        filter_out = fun(_Packet, _State) -> ok end :: fun((binary(), #sut_state{}) -> ok | {ok, Packet :: binary()} | {error, any()}),
+        filter_in = fun(_Packet, _State) -> ok end :: fun((binary(), #sut_state{}) -> ok | {ok, Packet :: binary()} | {error, any()}),
 
-        error_out = fun(ok) -> ok; (Error) -> Error end,
-        error_in = fun(ok) -> ok; (Error) -> Error end,
+        error_out = fun(ok) -> ok; (Error) -> Error end :: fun((any()) -> any()),
+        error_in = fun(ok) -> ok; (Error) -> Error end :: fun((any()) -> any()),
 
-        s,
-        fd,
-        dev
+        s :: undefined | inet:socket(),
+        fd :: undefined | integer(),
+        dev :: undefined | pid()
         }).
