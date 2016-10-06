@@ -1,11 +1,8 @@
 .PHONY: all dirs compile clean examples eg
 
-REBAR := rebar3
+REBAR ?= rebar3
 
-all: dirs deps clean compile
-
-dirs:
-	@mkdir -p priv/tmp
+all: deps clean compile
 
 compile:
 	@$(REBAR) compile
