@@ -1,8 +1,8 @@
-.PHONY: all dirs compile clean examples eg
+.PHONY: all compile clean examples eg
 
 REBAR ?= rebar3
 
-all: deps clean compile
+all: clean compile
 
 compile:
 	@$(REBAR) compile
