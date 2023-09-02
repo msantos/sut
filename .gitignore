@@ -1,2 +1,4 @@
 *.[oa]
 *.beam
+_build
+doc
