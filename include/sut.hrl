@@ -30,28 +30,37 @@
 %% POSSIBILITY OF SUCH DAMAGE.
 -define(IPPROTO_IPV6, 41).
 
--define(PROPLIST_TO_RECORD(Record),
-        fun(Proplist) ->
-            Fields = record_info(fields, Record),
-            [Tag| Values] = tuple_to_list(#Record{}),
-            Defaults = lists:zip(Fields, Values),
-            L = lists:map(fun ({K,V}) -> proplists:get_value(K, Proplist, V) end, Defaults),
-            list_to_tuple([Tag|L])
-        end).
+-define(PROPLIST_TO_RECORD(Record), fun(Proplist) ->
+    Fields = record_info(fields, Record),
+    [Tag | Values] = tuple_to_list(#Record{}),
+    Defaults = lists:zip(Fields, Values),
+    L = lists:map(fun({K, V}) -> proplists:get_value(K, Proplist, V) end, Defaults),
+    list_to_tuple([Tag | L])
+end).
 
 -record(sut_state, {
-        ifname = <<"sut-ipv6">> :: binary(),
-        serverv4 = {127,0,0,1} :: string() | inet:ip4_address(),
-        clientv4 = {127,0,0,1} :: string() | inet:ip4_address(),
-        clientv6 = {0,0,0,0,0,0,0,1} :: string() | inet:ip6_address(),
+    ifname = <<"sut-ipv6">> :: binary(),
+    serverv4 = {127, 0, 0, 1} :: string() | inet:ip4_address(),
+    clientv4 = {127, 0, 0, 1} :: string() | inet:ip4_address(),
+    clientv6 = {0, 0, 0, 0, 0, 0, 0, 1} :: string() | inet:ip6_address(),
 
-        filter_out = fun(_Packet, _State) -> ok end :: fun((binary(), #sut_state{}) -> ok | {ok, Packet :: binary()} | {error, any()}),
-        filter_in = fun(_Packet, _State) -> ok end :: fun((binary(), #sut_state{}) -> ok | {ok, Packet :: binary()} | {error, any()}),
+    filter_out = fun(_Packet, _State) -> ok end :: fun(
+        (binary(), #sut_state{}) -> ok | {ok, Packet :: binary()} | {error, any()}
+    ),
+    filter_in = fun(_Packet, _State) -> ok end :: fun(
+        (binary(), #sut_state{}) -> ok | {ok, Packet :: binary()} | {error, any()}
+    ),
 
-        error_out = fun(ok) -> ok; (Error) -> Error end :: fun((any()) -> any()),
-        error_in = fun(ok) -> ok; (Error) -> Error end :: fun((any()) -> any()),
+    error_out = fun
+        (ok) -> ok;
+        (Error) -> Error
+    end :: fun((any()) -> any()),
+    error_in = fun
+        (ok) -> ok;
+        (Error) -> Error
+    end :: fun((any()) -> any()),
 
-        s :: undefined | inet:socket(),
-        fd :: undefined | integer(),
-        dev :: undefined | pid()
-        }).
+    s :: undefined | inet:socket(),
+    fd :: undefined | integer(),
+    dev :: undefined | pid()
+}).

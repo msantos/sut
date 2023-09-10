@@ -33,8 +33,7 @@
 -export([
     out/3,
     in/3
-    ]).
-
+]).
 
 %% tun device -> socket
 -spec out(inet:socket(), binary(), #sut_state{}) -> any().
@@ -46,9 +45,9 @@ out(Socket, Packet, #sut_state{filter_out = Fun} = State) ->
     end.
 
 to_sock(Socket, Packet, #sut_state{
-                error_out = FunErr,
-                serverv4 = Server
-                }) ->
+    error_out = FunErr,
+    serverv4 = Server
+}) ->
     ok = FunErr(gen_udp:send(Socket, Server, 0, Packet)).
 
 %% socket -> tun device
@@ -64,44 +63,43 @@ in(Dev, Packet, #sut_state{filter_in = Fun} = State) ->
 to_tun(Dev, Packet, #sut_state{error_in = FunErr}) ->
     ok = FunErr(tuncer:send(Dev, Packet)).
 
-
 %%
 %% Check for valid IPv6 packet
 %%
 
 % loopback
-valid(<<6:4, _Class:8, _Flow:20,
-        _Len:16, _Next:8, _Hop:8,
-        _SA1:16, _SA2:16, _SA3:16, _SA4:16, _SA5:16, _SA6:16, _SA7:16, _SA8:16,
-        0:16, 0:16, 0:16, 0:16, 0:16, 0:16, 0:16, 1:16,
-        _Payload/binary>>) ->
+valid(
+    <<6:4, _Class:8, _Flow:20, _Len:16, _Next:8, _Hop:8, _SA1:16, _SA2:16, _SA3:16, _SA4:16,
+        _SA5:16, _SA6:16, _SA7:16, _SA8:16, 0:16, 0:16, 0:16, 0:16, 0:16, 0:16, 0:16, 1:16,
+        _Payload/binary>>
+) ->
     {invalid, loopback};
 % unspecified address
-valid(<<6:4, _Class:8, _Flow:20,
-        _Len:16, _Next:8, _Hop:8,
-        _SA1:16, _SA2:16, _SA3:16, _SA4:16, _SA5:16, _SA6:16, _SA7:16, _SA8:16,
-        0:16, 0:16, 0:16, 0:16, 0:16, 0:16, 0:16, 0:16,
-        _Payload/binary>>) ->
+valid(
+    <<6:4, _Class:8, _Flow:20, _Len:16, _Next:8, _Hop:8, _SA1:16, _SA2:16, _SA3:16, _SA4:16,
+        _SA5:16, _SA6:16, _SA7:16, _SA8:16, 0:16, 0:16, 0:16, 0:16, 0:16, 0:16, 0:16, 0:16,
+        _Payload/binary>>
+) ->
     {invalid, unspecified_address};
-% Multicast 
-valid(<<6:4, _Class:8, _Flow:20,
-        _Len:16, _Next:8, _Hop:8,
-        _SA1:16, _SA2:16, _SA3:16, _SA4:16, _SA5:16, _SA6:16, _SA7:16, _SA8:16,
-        16#FF00:16, _:16, _:16, _:16, _:16, _:16, _:16, _:16,
-        _Payload/binary>>) ->
+% Multicast
+valid(
+    <<6:4, _Class:8, _Flow:20, _Len:16, _Next:8, _Hop:8, _SA1:16, _SA2:16, _SA3:16, _SA4:16,
+        _SA5:16, _SA6:16, _SA7:16, _SA8:16, 16#FF00:16, _:16, _:16, _:16, _:16, _:16, _:16, _:16,
+        _Payload/binary>>
+) ->
     {invalid, multicast};
 % IPv6 Addresses with Embedded IPv4 Addresses
-valid(<<6:4, _Class:8, _Flow:20,
-        _Len:16, _Next:8, _Hop:8,
-        _SA1:16, _SA2:16, _SA3:16, _SA4:16, _SA5:16, _SA6:16, _SA7:16, _SA8:16,
-        0:16, 0:16, 0:16, 0:16, 0:16, 0:16, _:16, _:16,
-        _Payload/binary>>) ->
+valid(
+    <<6:4, _Class:8, _Flow:20, _Len:16, _Next:8, _Hop:8, _SA1:16, _SA2:16, _SA3:16, _SA4:16,
+        _SA5:16, _SA6:16, _SA7:16, _SA8:16, 0:16, 0:16, 0:16, 0:16, 0:16, 0:16, _:16, _:16,
+        _Payload/binary>>
+) ->
     {invalid, ipv4_compatible_ipv6_address};
-valid(<<6:4, _Class:8, _Flow:20,
-        _Len:16, _Next:8, _Hop:8,
-        _SA1:16, _SA2:16, _SA3:16, _SA4:16, _SA5:16, _SA6:16, _SA7:16, _SA8:16,
-        0:16, 0:16, 0:16, 0:16, 0:16, 16#FFFF:16, _:16, _:16,
-        _Payload/binary>>) ->
+valid(
+    <<6:4, _Class:8, _Flow:20, _Len:16, _Next:8, _Hop:8, _SA1:16, _SA2:16, _SA3:16, _SA4:16,
+        _SA5:16, _SA6:16, _SA7:16, _SA8:16, 0:16, 0:16, 0:16, 0:16, 0:16, 16#FFFF:16, _:16, _:16,
+        _Payload/binary>>
+) ->
     {invalid, ipv4_mapped_ipv6_address};
 valid(<<6:4, _:4, _/binary>>) ->
     ok;

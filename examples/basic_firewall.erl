@@ -26,19 +26,17 @@
 -export([
     in/2,
     out/2
-    ]).
+]).
 
--define(RECORD_TO_PROPLIST(Record),
-        fun(Val) ->
-            lists:zip(
-                record_info(fields, Record),
-                tl(tuple_to_list(Val))
-                )
-    end).
-
+-define(RECORD_TO_PROPLIST(Record), fun(Val) ->
+    lists:zip(
+        record_info(fields, Record),
+        tl(tuple_to_list(Val))
+    )
+end).
 
 in(Packet, _State) ->
-    {IPv6Header, Payload} =  pkt:ipv6(Packet),
+    {IPv6Header, Payload} = pkt:ipv6(Packet),
     in_1(IPv6Header, Payload).
 
 in_1(#ipv6{next = ?IPPROTO_ICMPV6}, _) ->
@@ -51,18 +49,22 @@ in_1(#ipv6{next = ?IPPROTO_UDP}, Packet) ->
 in_1(#ipv6{next = ?IPPROTO_TCP}, Packet) ->
     {TCPHeader, _} = pkt:tcp(Packet),
     case TCPHeader of
-        #tcp{dport = 22} -> ok;
-        #tcp{sport = 80, dport = Dport, ack = 1}
-                when Dport >= 32768; Dport =< 61000 -> ok;
-        #tcp{sport = 443, dport = Dport, ack = 1}
-                when Dport >= 32768; Dport =< 61000 -> ok;
+        #tcp{dport = 22} ->
+            ok;
+        #tcp{sport = 80, dport = Dport, ack = 1} when
+            Dport >= 32768; Dport =< 61000
+        ->
+            ok;
+        #tcp{sport = 443, dport = Dport, ack = 1} when
+            Dport >= 32768; Dport =< 61000
+        ->
+            ok;
         _ ->
             {block, in, tcphdr(TCPHeader)}
     end.
 
-
 out(Packet, _State) ->
-    {IPv6Header, Payload} =  pkt:ipv6(Packet),
+    {IPv6Header, Payload} = pkt:ipv6(Packet),
     out_1(IPv6Header, Payload).
 
 out_1(#ipv6{next = ?IPPROTO_ICMPV6}, _) ->
