@@ -117,7 +117,7 @@ destroy(Ref) -> ok
 To compile:
 
 ```
-make examples
+erlc -I deps -o ebin examples/*.erl
 ```
 
 ### basic_firewall

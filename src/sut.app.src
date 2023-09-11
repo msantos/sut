@@ -1,5 +1,4 @@
-{application, sut,
-    [
+{application, sut, [
     {description, "6in4 Userlspace tunnel"},
     {vsn, "0.2.0"},
     {registered, []},
@@ -7,4 +6,4 @@
     {env, []},
     {licenses, ["BSD-3-Clause"]},
     {links, [{"Github", "https://github.com/msantos/sut"}]}
-    ]}.
+]}.
