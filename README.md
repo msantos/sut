@@ -85,7 +85,7 @@ start_link(Options) -> {ok, Ref}
     {filter_out, Fun} allows filtering and manipulation of IPv6
     packets received from the tun device.
 
-    Filtering functions take 2 argments: the packet payload (a binary)
+    Filtering functions take 2 arguments: the packet payload (a binary)
     and the tunnel state:
 
         -include("sut.hrl").

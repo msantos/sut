@@ -27,15 +27,112 @@
 %%% LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
 %%% NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 %%% SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+%% @doc sut, an IPv6 in IPv4 Userlspace Tunnel (RFC 4213)
+%%
+%% == SETUP ==
+%%
+%% * Sign up for an IPv6 tunnel with Hurricane Electric
+%%
+%%   [http://tunnelbroker.net/]
+%%
+%% * Start the IPv6 tunnel:
+%%
+%% ```
+%%   * Serverv4 = HE IPv4 tunnel end
+%%
+%%   * Clientv4 = Your local IP address
+%%
+%%   * Clientv6 = The IPv6 address assigned by HE to your end of the tunnel
+%% '''
+%%
+%% ```
+%% sut:start([
+%%            {serverv4, "216.66.22.2"},
+%%            {clientv4, "192.168.1.72"},
+%%            {clientv6, "2001:3:3:3::2"}
+%%           ]).
+%% '''
+%%
+%% * Set up MTU and routing (as root)
+%%
+%% ```
+%% ifconfig sut-ipv6 mtu 1480
+%% ip route add ::/0 dev sut-ipv6
+%% '''
+%%
+%% * Test the tunnel!
+%%
+%% ```
+%% ping6 ipv6.google.com
+%% '''
+%%
+%% == EXAMPLES ==
+%%
+%% To compile:
+%%
+%% ```
+%% erlc -I deps -o ebin examples/*.erl
+%% '''
+%%
+%% === basic_firewall ===
+%%
+%% An example of setting up a stateless packet filter.
+%%
+%% The rules are:
+%%
+%% ```
+%% * icmp: all
+%% * udp: none
+%% * tcp:
+%%     * outgoing: 22, 80, 443
+%%     * incoming: 22
+%% '''
+%%
+%% Start the tunnel with the filter:
+%%
+%% ```
+%% sut:start([
+%%     {filter_out, fun(Packet, State) -> basic_firewall:out(Packet, State) end},
+%%     {filter_in, fun(Packet, State) -> basic_firewall:in(Packet, State) end},
+%%
+%%     {serverv4, Server4},
+%%     {clientv4, Client4},
+%%     {clientv6, Client6}
+%%     ]).
+%% '''
+%%
+%% === tunnel_activity ===
+%%
+%% Flashes LEDs attached to an Arduino to signal tunnel activity. Requires:
+%%
+%% [https://github.com/msantos/srly]
+%%
+%% Upload a sketch to the Arduino:
+%%
+%% [https://github.com/msantos/srly/blob/master/examples/strobe/strobe.pde]
+%%
+%% Then start the tunnel:
+%%
+%% ```
+%% tunnel_activity:start("/dev/ttyUSB0",
+%%         [{led_in, 3},
+%%          {led_out, 4},
+%%
+%%         {serverv4, Server4},
+%%         {clientv4, Client4},
+%%         {clientv6, Client6}]).
+%% '''
 -module(sut).
 -include("sut.hrl").
 -behaviour(gen_server).
 
 -export([
+    start/1,
+    start_link/1,
     destroy/1
 ]).
 
--export([start/1, start_link/1]).
 -export([
     init/1,
     handle_call/3,
@@ -75,14 +172,64 @@
 %%--------------------------------------------------------------------
 %%% Exports
 %%--------------------------------------------------------------------
+
+%% @doc Shutdown the tunnel. On Linux, the tunnel device will be removed.
 -spec destroy(pid()) -> ok.
 destroy(Ref) when is_pid(Ref) ->
     gen_server:call(Ref, destroy).
 
+%% @doc Start an IPv6 over IPv4 configured tunnel.
+%% @see start_link/1
 -spec start(proplists:proplist()) -> 'ignore' | {'error', _} | {'ok', pid()}.
 start(Opt) when is_list(Opt) ->
     gen_server:start(?MODULE, [options(Opt)], []).
 
+
+%% @doc Start an IPv6 over IPv4 configured tunnel.
+%%
+%% The default tun device is named `sut-ipv6'. To specify the name,
+%% use `{ifname, <<"devname">>}'. Note the user running the tunnel
+%% must have sudo permissions to configure this device.
+%%
+%% `{serverv4, Server4}' is the IPv4 address of the peer.
+%%
+%% `{clientv4, Client4}' is the IPv4 address of the local end. If the
+%% client is on a private network (the tunnel will be NAT'ed by
+%% the gateway), specify the private IPv4 address here.
+%%
+%% `{clientv6, Client6}' is the IPv6 address of the local end. This
+%% address will usually be assigned by the tunnel broker.
+%%
+%% `{filter_in, Fun}' allows filtering and arbitrary transformation
+%% of IPv6 packets received from the network. All packets undergo
+%% the mandatory checks specified by RFC 4213 before being passed
+%% to user checks.
+%%
+%% `{filter_out, Fun}' allows filtering and manipulation of IPv6
+%% packets received from the tun device.
+%%
+%% Filtering functions take 2 arguments: the packet payload (a binary)
+%% and the tunnel state:
+%%
+%% ```
+%%     -include("sut.hrl").
+%%
+%%     -record(sut_state, {
+%%         serverv4,
+%%         clientv4,
+%%         clientv6
+%%         }.
+%% '''
+%%
+%% Filtering functions should return `ok' to allow the packet or
+%% `{ok, binary()}' if the packet has been altered by the function.
+%%
+%% Any other return value causes the packet to be dropped. The
+%% default filter for both incoming and outgoing packets is a noop:
+%%
+%% ```
+%%     fun(_Packet, _State) -> ok end.
+%% '''
 -spec start_link(proplists:proplist()) -> 'ignore' | {'error', _} | {'ok', pid()}.
 start_link(Opt) when is_list(Opt) ->
     gen_server:start_link(?MODULE, [options(Opt)], []).
@@ -90,6 +237,8 @@ start_link(Opt) when is_list(Opt) ->
 %%--------------------------------------------------------------------
 %%% Callbacks
 %%--------------------------------------------------------------------
+
+%% @private
 init([
     #state{
         serverv4 = Server,
@@ -128,15 +277,18 @@ init([
         clientv6 = aton(Client6)
     }}.
 
+%% @private
 handle_call(destroy, _From, State) ->
     {stop, normal, ok, State}.
 
+%% @private
 handle_cast(_Msg, State) ->
     {noreply, State}.
 
 %%
-%% IPv6 encapsuplated packet read from socket
+%% IPv6 encapsulated packet read from socket
 %%
+%% @private
 handle_info(
     {udp, Socket, {SA1, SA2, SA3, SA4}, 0,
         <<4:4, HL:4, _ToS:8, _Len:16, _Id:16, 0:1, _DF:1, _MF:1, _Off:13, _TTL:8, ?IPPROTO_IPV6:8,
@@ -180,10 +332,12 @@ handle_info(Info, State) ->
     error_logger:error_report([wtf, Info]),
     {noreply, State}.
 
+%% @private
 terminate(_Reason, #state{fd = FD}) ->
     procket:close(FD),
     ok.
 
+%% @private
 code_change(_OldVsn, State, _Extra) ->
     {ok, State}.
 
