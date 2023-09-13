@@ -142,27 +142,46 @@
     code_change/3
 ]).
 
+-type sut_state() :: #sut_state{}.
+
+-type filter() :: fun((binary(), sut_state()) -> ok | {ok, Packet :: binary()} | {error, any()}).
+-type errorfun() :: fun((any()) -> any()).
+
+-type options() ::
+    {ifname, string() | binary()}
+    | {serverv4, string() | inet:ip4_address()}
+    | {serverv6, string() | inet:ip6_address()}
+    | {clientv4, string() | inet:ip4_address()}
+    | {clientv6, string() | inet:ip6_address()}
+    | {filter_out, filter()}
+    | {filter_in, filter()}
+    | {error_out, errorfun()}
+    | {error_in, errorfun()}.
+
+-export_type([
+    filter/0,
+    errorfun/0,
+    options/0,
+    sut_state/0
+]).
+
 -record(state, {
     ifname = <<"sut-ipv6">> :: binary(),
     serverv4 = {127, 0, 0, 1} :: string() | inet:ip4_address(),
     clientv4 = {127, 0, 0, 1} :: string() | inet:ip4_address(),
     clientv6 = {0, 0, 0, 0, 0, 0, 0, 1} :: string() | inet:ip6_address(),
 
-    filter_out = fun(_Packet, _State) -> ok end :: fun(
-        (binary(), #sut_state{}) -> ok | {ok, Packet :: binary()} | {error, any()}
-    ),
-    filter_in = fun(_Packet, _State) -> ok end :: fun(
-        (binary(), #sut_state{}) -> ok | {ok, Packet :: binary()} | {error, any()}
-    ),
+    filter_out = fun(_Packet, _State) -> ok end :: filter(),
+    filter_in = fun(_Packet, _State) -> ok end :: filter(),
 
     error_out = fun
         (ok) -> ok;
         (Error) -> Error
-    end :: fun((any()) -> any()),
+    end :: errorfun(),
     error_in = fun
         (ok) -> ok;
         (Error) -> Error
-    end :: fun((any()) -> any()),
+    end :: errorfun(),
 
     s :: undefined | inet:socket(),
     fd :: undefined | integer(),
@@ -180,10 +199,9 @@ destroy(Ref) when is_pid(Ref) ->
 
 %% @doc Start an IPv6 over IPv4 configured tunnel.
 %% @see start_link/1
--spec start(proplists:proplist()) -> 'ignore' | {'error', _} | {'ok', pid()}.
+-spec start([options()]) -> 'ignore' | {'error', _} | {'ok', pid()}.
 start(Opt) when is_list(Opt) ->
     gen_server:start(?MODULE, [options(Opt)], []).
-
 
 %% @doc Start an IPv6 over IPv4 configured tunnel.
 %%
@@ -230,7 +248,7 @@ start(Opt) when is_list(Opt) ->
 %% ```
 %%     fun(_Packet, _State) -> ok end.
 %% '''
--spec start_link(proplists:proplist()) -> 'ignore' | {'error', _} | {'ok', pid()}.
+-spec start_link([options()]) -> 'ignore' | {'error', _} | {'ok', pid()}.
 start_link(Opt) when is_list(Opt) ->
     gen_server:start_link(?MODULE, [options(Opt)], []).
 
