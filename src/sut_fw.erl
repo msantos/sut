@@ -36,7 +36,7 @@
 ]).
 
 %% tun device -> socket
--spec out(inet:socket(), binary(), sut:sut_state()) -> any().
+-spec out(inet:socket(), binary(), sut:sut_state()) -> ok | {error, any()}.
 out(Socket, Packet, #sut_state{filter_out = Fun} = State) ->
     case Fun(Packet, State) of
         ok -> to_sock(Socket, Packet, State);
@@ -51,7 +51,7 @@ to_sock(Socket, Packet, #sut_state{
     ok = FunErr(gen_udp:send(Socket, Server, 0, Packet)).
 
 %% socket -> tun device
--spec in(pid(), binary(), sut:sut_state()) -> any().
+-spec in(pid(), binary(), sut:sut_state()) -> ok | {error, any()}.
 in(Dev, Packet, #sut_state{filter_in = Fun} = State) ->
     ok = valid(Packet),
     case Fun(Packet, State) of

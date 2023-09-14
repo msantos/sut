@@ -145,7 +145,7 @@
 -type sut_state() :: #sut_state{}.
 
 -type filter() :: fun((binary(), sut_state()) -> ok | {ok, Packet :: binary()} | {error, any()}).
--type errorfun() :: fun((any()) -> any()).
+-type errorfun() :: fun((any()) -> ok | {error, any()}).
 
 -type options() ::
     {ifname, string() | binary()}
