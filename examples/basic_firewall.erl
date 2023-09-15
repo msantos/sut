@@ -1,4 +1,4 @@
-%%% Trivial stateless firewall
+%%% @doc Trivial stateless firewall
 %%%
 %%% Allow:
 %%%

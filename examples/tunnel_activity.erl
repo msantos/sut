@@ -1,4 +1,4 @@
-%% Flash LED lights on an Arduino
+%% @doc Flash LED lights on an Arduino
 %%
 %% Flashes LEDs whenever IPv6 traffic goes through the tunnel.
 -module(tunnel_activity).
