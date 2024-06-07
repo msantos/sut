@@ -1,3 +1,6 @@
+[![Package Version](https://img.shields.io/hexpm/v/sut)](https://hex.pm/packages/sut)
+[![Hex Docs](https://img.shields.io/badge/hex-docs)](https://hexdocs.pm/sut/)
+
 sut, an IPv6 in IPv4 Userlspace Tunnel (RFC 4213)
 
 ## DEPENDENCIES
