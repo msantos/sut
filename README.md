@@ -147,7 +147,7 @@ sut:start([
     {serverv4, Server4},
     {clientv4, Client4},
     {clientv6, Client6}
-    ]).
+]).
 ```
 
 ### tunnel_activity
@@ -167,13 +167,17 @@ https://github.com/msantos/srly/blob/master/examples/strobe/strobe.pde
 Then start the tunnel:
 
 ```
-tunnel_activity:start("/dev/ttyUSB0",
-        [{led_in, 3},
-         {led_out, 4},
+tunnel_activity:start(
+    "/dev/ttyUSB0",
+    [
+        {led_in, 3},
+        {led_out, 4},
 
         {serverv4, Server4},
         {clientv4, Client4},
-        {clientv6, Client6}]).
+        {clientv6, Client6}
+    ]
+).
 ```
 
 ## TODO
