@@ -1,4 +1,4 @@
-%%% @copyright 2012-2023 Michael Santos <michael.santos@gmail.com>
+%%% @copyright 2012-2024 Michael Santos <michael.santos@gmail.com>
 %%% All rights reserved.
 %%%
 %%% Redistribution and use in source and binary forms, with or without
@@ -48,10 +48,10 @@
 %%
 %% ```
 %% sut:start([
-%%            {serverv4, "216.66.22.2"},
-%%            {clientv4, "192.168.1.72"},
-%%            {clientv6, "2001:3:3:3::2"}
-%%           ]).
+%%     {serverv4, "216.66.22.2"},
+%%     {clientv4, "192.168.1.72"},
+%%     {clientv6, "2001:3:3:3::2"}
+%% ]).
 %% '''
 %%
 %% * Set up MTU and routing (as root)
@@ -99,7 +99,7 @@
 %%     {serverv4, Server4},
 %%     {clientv4, Client4},
 %%     {clientv6, Client6}
-%%     ]).
+%% ]).
 %% '''
 %%
 %% === tunnel_activity ===
@@ -115,13 +115,17 @@
 %% Then start the tunnel:
 %%
 %% ```
-%% tunnel_activity:start("/dev/ttyUSB0",
-%%         [{led_in, 3},
-%%          {led_out, 4},
+%% tunnel_activity:start(
+%%     "/dev/ttyUSB0",
+%%     [
+%%         {led_in, 3},
+%%         {led_out, 4},
 %%
 %%         {serverv4, Server4},
 %%         {clientv4, Client4},
-%%         {clientv6, Client6}]).
+%%         {clientv6, Client6}
+%%     ]
+%% ).
 %% '''
 -module(sut).
 -include("sut.hrl").
